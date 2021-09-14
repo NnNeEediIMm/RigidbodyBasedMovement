@@ -10,11 +10,13 @@ public class PlayerMovement : MonoBehaviour
 
     //move system
     Vector3 movement;
+    [Header("Main Movement")]
     [Range(1, 100)]
     public float speed = 10f;
 
     //gravity
     private bool isGrounded = false;
+    [Header("Gravity")]
     public LayerMask ground;
     public int gravityScale = 20;
 
@@ -23,16 +25,19 @@ public class PlayerMovement : MonoBehaviour
 
     //jumping
     bool jumping;
+    [Header("Jumping")]
     public float jumpForce = 150f;
 
     //crouching
     bool crouching;
+    [Header("Crouching")]
     public bool canCrouch = true;
     private float speedWhileCrouching = 5f;
     private float originalSize;
     public float reducedSize = 0.5f;
 
     //sprinting
+    [Header("Sprinting")]
     public bool canSprint = true;
     public float sprintSpeed = 13f;
     private bool sprinting;
