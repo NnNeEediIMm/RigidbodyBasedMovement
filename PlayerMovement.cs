@@ -14,6 +14,11 @@ public class PlayerMovement : MonoBehaviour
     [Range(1, 100)]
     public float speed = 10f;
 
+    //input system part 1.
+    [Header("Input")]
+    public KeyCode crouch = KeyCode.LeftShift;
+    public KeyCode sprint = KeyCode.LeftControl;
+
     //gravity
     private bool isGrounded = false;
     [Header("Gravity")]
@@ -79,7 +84,7 @@ public class PlayerMovement : MonoBehaviour
         Gravity();
     }
 
-    
+
     //Start of the gravity 
     public void Gravity() //player gravity
     {
@@ -112,10 +117,10 @@ public class PlayerMovement : MonoBehaviour
 
         jumping = Input.GetKeyDown(KeyCode.Space);
 
-        crouching = Input.GetKey(KeyCode.LeftShift) && Input.GetKey(KeyCode.W);
-        
-        sprinting = Input.GetKeyDown(KeyCode.LeftControl) && Input.GetKey(KeyCode.W);
-        upSprinting = Input.GetKeyUp(KeyCode.LeftControl);
+        crouching = Input.GetKey(crouch) && Input.GetKey(KeyCode.W);
+
+        sprinting = Input.GetKey(sprint) && Input.GetKey(KeyCode.W);
+        upSprinting = Input.GetKeyUp(sprint);
     }
 
     public void Jump()
@@ -144,7 +149,7 @@ public class PlayerMovement : MonoBehaviour
                 StopCrouching();
             }
         }
-        
+
     }
 
     public void StopCrouching()
@@ -152,7 +157,7 @@ public class PlayerMovement : MonoBehaviour
         transform.localScale = new Vector3(transform.localScale.x, originalSize, transform.localScale.z);
         speed = defaultSpeed;
     }
-    
+
     //sprinting
     public void Sprint()
     {
@@ -173,7 +178,7 @@ public class PlayerMovement : MonoBehaviour
         speed = defaultSpeed;
     }
 
-    public void playerMovement() 
+    public void playerMovement()
     {
         transform.Translate(Vector3.right * movement.z * speed * Time.fixedDeltaTime);
         transform.Translate(Vector3.forward * movement.x * speed * Time.fixedDeltaTime);
