@@ -18,11 +18,12 @@ public class PlayerMovement : MonoBehaviour
     [Header("Input")]
     public KeyCode crouch = KeyCode.LeftShift;
     public KeyCode sprint = KeyCode.LeftControl;
+    public KeyCode jump = KeyCode.Space;
 
     //gravity
     private bool isGrounded = false;
-    [Header("Gravity")]
     private GameObject grCheck;
+    [Header("Gravity")]
     public LayerMask ground;
     public int gravityScale = 20;
 
