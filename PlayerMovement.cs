@@ -10,6 +10,7 @@ public class PlayerMovement : MonoBehaviour
 
     //move system
     Vector3 movement;
+    float x, y;
     [Header("Main Movement")]
     [Range(1, 100)]
     public float speed = 10f;
@@ -36,20 +37,20 @@ public class PlayerMovement : MonoBehaviour
     //jumping
     bool jumping;
     [Header("Jumping")]
-    public float jumpForce = 150f;
+    public float jumpForce = 1000f;
 
     //crouching
     bool crouching;
     [Header("Crouching")]
     public bool canCrouch = true;
-    private float speedWhileCrouching = 5f;
+    private float speedWhileCrouching;
     private float originalSize;
     public float reducedSize = 0.5f;
 
     //sprinting
     [Header("Sprinting")]
     public bool canSprint = true;
-    public float sprintSpeed = 13f;
+    private float sprintSpeed;
     private bool sprinting;
     private bool upSprinting;
     float defaultSpeed;
@@ -61,8 +62,9 @@ public class PlayerMovement : MonoBehaviour
         //for gravity
         grCheck = new GameObject("Check");
 
-        //for freezing rb rotation
+        //rb fixes
         rb.constraints = RigidbodyConstraints.FreezeRotation;
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
 
         //for crouching
         originalSize = transform.localScale.y;
@@ -70,12 +72,14 @@ public class PlayerMovement : MonoBehaviour
 
         //for spinting
         defaultSpeed = speed;
+        sprintSpeed = defaultSpeed * 1.5f;
     }
 
     private void Update()
     {
         //movement
         movementInput();
+        movementHelp();
 
         //gravity
         normalizeGravity();
@@ -102,7 +106,10 @@ public class PlayerMovement : MonoBehaviour
     //Start of the gravity 
     public void Gravity() //player gravity
     {
-        rb.AddForce(Vector3.down * Time.deltaTime * gravityScale);
+        //one multipler for addforce
+        float multiplerV = 100f;
+
+        rb.AddForce(Vector3.down * Time.deltaTime * gravityScale * multiplerV);
     }
     public void normalizeGravity()
     {
@@ -122,8 +129,8 @@ public class PlayerMovement : MonoBehaviour
     /// </summary>
     public void movementInput()
     {
-        movement.z = Input.GetAxis("Horizontal");
-        movement.x = Input.GetAxis("Vertical");
+        x = Input.GetAxisRaw("Horizontal");
+        y = Input.GetAxisRaw("Vertical");
 
         jumping = Input.GetKeyDown(jump);
 
@@ -190,7 +197,16 @@ public class PlayerMovement : MonoBehaviour
 
     public void playerMovement()
     {
-        transform.Translate(Vector3.right * movement.z * speed * Time.fixedDeltaTime);
-        transform.Translate(Vector3.forward * movement.x * speed * Time.fixedDeltaTime);
+        //one multipler
+        float multiplerM = 10f;
+
+        rb.AddForce(movement.normalized * speed * multiplerM, ForceMode.Acceleration);
+    }
+
+    public void movementHelp()
+    {
+        float drag = 6f;
+        rb.drag = drag;
+        movement = transform.forward * y + transform.right * x;
     }
 }
