@@ -22,8 +22,12 @@ public class PlayerMovement : MonoBehaviour
     //gravity
     private bool isGrounded = false;
     [Header("Gravity")]
+    private GameObject grCheck;
     public LayerMask ground;
     public int gravityScale = 20;
+
+    //for more gravity
+    private float endOfYPosition;
 
     //Rigidbody
     protected Rigidbody rb;
@@ -53,6 +57,12 @@ public class PlayerMovement : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
 
+        //for gravity
+        grCheck = new GameObject("Check");
+
+        //for freezing rb rotation
+        rb.constraints = RigidbodyConstraints.FreezeRotation;
+
         //for crouching
         originalSize = transform.localScale.y;
         speedWhileCrouching = speed / 2;
@@ -65,6 +75,9 @@ public class PlayerMovement : MonoBehaviour
     {
         //movement
         movementInput();
+
+        //gravity
+        normalizeGravity();
 
         //mechanics
         Jump();
@@ -90,19 +103,15 @@ public class PlayerMovement : MonoBehaviour
     {
         rb.AddForce(Vector3.down * Time.deltaTime * gravityScale);
     }
-    private void OnCollisionStay(Collision collision)
+    public void normalizeGravity()
     {
-        if (((1 << collision.gameObject.layer) & ground) != 0)
-        {
-            isGrounded = true;
-        }
-    }
-    private void OnCollisionExit(Collision collision)
-    {
-        if (isGrounded)
-        {
-            isGrounded = false;
-        }
+        //transform position
+        GameObject groundd = GameObject.Find("Check");
+        groundd.transform.position = new Vector3(transform.position.x, transform.position.y - endOfYPosition, transform.position.z);
+
+        //for ground checking
+        endOfYPosition = transform.lossyScale.y;
+        isGrounded = Physics.CheckSphere(groundd.transform.position, 0.0011f, ground);
     }
     //end of gravity
 
@@ -137,7 +146,7 @@ public class PlayerMovement : MonoBehaviour
     //crouching
     public void Crouching()
     {
-        if (canCrouch && isGrounded)
+        if (canCrouch)
         {
             if (crouching)
             {
