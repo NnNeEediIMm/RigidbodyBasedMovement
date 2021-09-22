@@ -14,6 +14,7 @@ public class PlayerMovement : MonoBehaviour
     [Header("Main Movement")]
     [Range(1, 100)]
     public float speed = 10f;
+    public bool slipperyMovement = true;
 
     //input system part 1.
     [Header("Input")]
@@ -205,7 +206,17 @@ public class PlayerMovement : MonoBehaviour
 
     public void movementHelp()
     {
-        float drag = 6f;
+        float drag = 1f;
+        if (slipperyMovement)
+        {
+            drag = 1.12f;
+        }
+        else if (!slipperyMovement)
+        {
+            drag = 6f;
+        }
+
+
         rb.drag = drag;
         movement = transform.forward * y + transform.right * x;
     }
