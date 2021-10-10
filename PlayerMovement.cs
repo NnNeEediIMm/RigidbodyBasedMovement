@@ -5,6 +5,7 @@ using UnityEngine;
  Rigidbody made by 
   NnNeEediIMm!*/
 
+[RequireComponent(typeof(Rigidbody))]
 public class PlayerMovement : MonoBehaviour
 {
     //move system
@@ -14,7 +15,7 @@ public class PlayerMovement : MonoBehaviour
     [Header("Main Movement")]
     [Range(1, 100)]
     public float speed = 10f;
-    public bool slipperyMovement = true;
+    public bool slipperyMovement = false;
 
     //input system part 1.
     [Header("Input")]
@@ -27,14 +28,15 @@ public class PlayerMovement : MonoBehaviour
     private GameObject grCheck;
     [Header("Gravity")]
     public LayerMask ground;
-    public int gravityScale = 20;
-    public float checkRadius = 0.34f;
+    public int gravityScale = 45;
+    public float checkRadius = 1f;
 
     //for more gravity
     private float endOfYPosition;
 
     //Rigidbody
     protected Rigidbody rb;
+    protected Collider coll;
 
     //jumping
     bool jumping;
@@ -47,7 +49,7 @@ public class PlayerMovement : MonoBehaviour
     public bool canCrouch = true;
     private float speedWhileCrouching;
     private float originalSize;
-    public float reducedSize = 0.5f;
+    float reducedSize = 0.5f;
 
     //sprinting
     [Header("Sprinting")]
@@ -59,25 +61,34 @@ public class PlayerMovement : MonoBehaviour
 
     //physics fix
     [Header("Physics")]
-    public float forceForward= 4f;
-    public float forceUp = 5f;
+    public bool usePhysics = true;
+    public float forceForward= 40f;
+    public float forceUp = 60f;
     public LayerMask hittable;
     public Vector3 upperCheck, downCheck;
-    public float stairCheckRadius = 1f;
+    public float stairRadiusDown = 1f;
+    public float stairRadiusUp = 0.7f;
+    /*height needs to be height of collider height*/public float heightOfPlayer = 2f;
 
+    Vector3 slerpDirection;
     GameObject upper, downer;
     bool isUp, isDown;
 
+    private void Awake()
+    {
+        rb = /*Rigidbody Component*/ GetComponent<Rigidbody>();
+        coll = /*Collider Component*/ GetComponent<Collider>();
+    }
+
     private void Start()
     {
-        rb = GetComponent<Rigidbody>();
-
         //for movement
         movementHelper = new GameObject("Movement Helper");
         movementHelper.transform.parent = this.transform;
 
         //for ground
         groundCheck();
+        transform.localScale = new Vector3(transform.localScale.x, 1);
         endOfYPosition = transform.lossyScale.y;
         
         //rb fixes
@@ -87,6 +98,7 @@ public class PlayerMovement : MonoBehaviour
         //for crouching
         originalSize = transform.localScale.y;
         speedWhileCrouching = speed / 2;
+        reducedSize = transform.localScale.y / 2;
 
         //for spinting
         defaultSpeed = speed;
@@ -229,8 +241,16 @@ public class PlayerMovement : MonoBehaviour
     {
         //one multipler
         float multiplerM = 10f;
+        FindWherePlayerIsLoking(y, x);
 
-        rb.AddForce(movement.normalized * speed * multiplerM, ForceMode.Acceleration);
+        if (!OnSlope() || !usePhysics)
+        {
+            rb.AddForce(movement.normalized * speed * multiplerM, ForceMode.Acceleration);
+        } else if (isGrounded && OnSlope() && usePhysics)
+        {
+            rb.AddForce(slerpDirection.normalized * speed * multiplerM * 1.2f, ForceMode.Acceleration);
+        }
+
     }
 
     public void movementHelp()
@@ -247,7 +267,7 @@ public class PlayerMovement : MonoBehaviour
 
 
         rb.drag = drag;
-        movement = transform.forward * y + transform.right * x;
+        slerpDirection = Vector3.ProjectOnPlane(movement, slopeHit.normal);
     }
 
     private void summonSlope()
@@ -262,12 +282,14 @@ public class PlayerMovement : MonoBehaviour
 
     public void stairAndSlopeFix()
     {
-        isUp = Physics.CheckSphere(upper.transform.position, stairCheckRadius, hittable);
-        isDown = Physics.CheckSphere(downer.transform.position, stairCheckRadius, hittable);
+        isUp = Physics.CheckSphere(upper.transform.position, stairRadiusUp, hittable);
+        isDown = Physics.CheckSphere(downer.transform.position, stairRadiusDown, hittable);
         bool isMovingX = x > 0.5f || x < -0.5f;
         bool isMovingY = y > 0.5f || y < -0.5f;
 
-        if (isDown)
+
+
+        if (isDown && isGrounded && usePhysics)
         {
             if (!isUp && isMovingX)
             {
@@ -280,5 +302,27 @@ public class PlayerMovement : MonoBehaviour
                 rb.AddForce(transform.TransformDirection(Vector3.right) * forceForward * x);
             }
         }
+    }
+
+    public async void FindWherePlayerIsLoking(float x, float y)
+    {
+        movement = transform.forward * x + transform.right * y;
+    }
+
+    RaycastHit slopeHit;
+    public bool OnSlope()
+    {
+        if (Physics.Raycast(transform.position, Vector3.down, out slopeHit, heightOfPlayer / 2 + 0.5f))
+        {
+            if (slopeHit.normal != Vector3.up)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        return false;
     }
 }
