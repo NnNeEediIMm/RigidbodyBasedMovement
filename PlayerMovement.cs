@@ -88,7 +88,7 @@ public class PlayerMovement : MonoBehaviour
 
         //for ground
         groundCheck();
-        transform.localScale = new Vector3(transform.localScale.x, 1, transform.localScale.y);
+        transform.localScale = new Vector3(transform.localScale.x, 1, transform.localScale.z);
         endOfYPosition = transform.lossyScale.y;
         
         //rb fixes
@@ -112,7 +112,7 @@ public class PlayerMovement : MonoBehaviour
     {
         //for gravity
         grCheck = new GameObject("Check");
-        grCheck.transform.position = new Vector3(transform.position.x, transform.position.y - endOfYPosition, transform.position.z);
+        grCheck.transform.position = new Vector3(transform.position.x, transform.position.y - transform.lossyScale.y, transform.position.z);
         grCheck.transform.parent = movementHelper.transform;
     }
 
@@ -132,6 +132,7 @@ public class PlayerMovement : MonoBehaviour
 
         //slopes 
         stairAndSlopeFix();
+        endOfYPosition = transform.lossyScale.y;
     }
 
     /// <summary>
