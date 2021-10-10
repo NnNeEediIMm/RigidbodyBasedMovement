@@ -1,16 +1,16 @@
 using System;
 using UnityEngine;
 
-/*Player movememnt for 
+/*Player movement for 
  Rigidbody made by 
   NnNeEediIMm!*/
 
 public class PlayerMovement : MonoBehaviour
 {
-
     //move system
     Vector3 movement;
     float x, y;
+    GameObject movementHelper;
     [Header("Main Movement")]
     [Range(1, 100)]
     public float speed = 10f;
@@ -28,6 +28,7 @@ public class PlayerMovement : MonoBehaviour
     [Header("Gravity")]
     public LayerMask ground;
     public int gravityScale = 20;
+    public float checkRadius = 0.34f;
 
     //for more gravity
     private float endOfYPosition;
@@ -41,7 +42,7 @@ public class PlayerMovement : MonoBehaviour
     public float jumpForce = 1000f;
 
     //crouching
-    bool crouching;
+    bool crouching, crouchingI;
     [Header("Crouching")]
     public bool canCrouch = true;
     private float speedWhileCrouching;
@@ -56,13 +57,29 @@ public class PlayerMovement : MonoBehaviour
     private bool upSprinting;
     float defaultSpeed;
 
+    //physics fix
+    [Header("Physics")]
+    public float forceForward= 4f;
+    public float forceUp = 5f;
+    public LayerMask hittable;
+    public Vector3 upperCheck, downCheck;
+    public float stairCheckRadius = 1f;
+
+    GameObject upper, downer;
+    bool isUp, isDown;
+
     private void Start()
     {
         rb = GetComponent<Rigidbody>();
 
-        //for gravity
-        grCheck = new GameObject("Check");
+        //for movement
+        movementHelper = new GameObject("Movement Helper");
+        movementHelper.transform.parent = this.transform;
 
+        //for ground
+        groundCheck();
+        endOfYPosition = transform.lossyScale.y;
+        
         //rb fixes
         rb.constraints = RigidbodyConstraints.FreezeRotation;
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
@@ -74,6 +91,17 @@ public class PlayerMovement : MonoBehaviour
         //for spinting
         defaultSpeed = speed;
         sprintSpeed = defaultSpeed * 1.5f;
+
+        //for physics
+        summonSlope();
+    }
+
+    private void groundCheck()
+    {
+        //for gravity
+        grCheck = new GameObject("Check");
+        grCheck.transform.position = new Vector3(transform.position.x, transform.position.y - endOfYPosition, transform.position.z);
+        grCheck.transform.parent = movementHelper.transform;
     }
 
     private void Update()
@@ -89,6 +117,9 @@ public class PlayerMovement : MonoBehaviour
         Jump();
         Crouching();
         Sprint();
+
+        //slopes 
+        stairAndSlopeFix();
     }
 
     /// <summary>
@@ -114,13 +145,7 @@ public class PlayerMovement : MonoBehaviour
     }
     public void normalizeGravity()
     {
-        //transform position
-        GameObject groundd = GameObject.Find("Check");
-        groundd.transform.position = new Vector3(transform.position.x, transform.position.y - endOfYPosition, transform.position.z);
-
-        //for ground checking
-        endOfYPosition = transform.lossyScale.y;
-        isGrounded = Physics.CheckSphere(groundd.transform.position, 0.0011f, ground);
+        isGrounded = Physics.CheckSphere(grCheck.transform.position, checkRadius, ground);
     }
     //end of gravity
 
@@ -135,7 +160,8 @@ public class PlayerMovement : MonoBehaviour
 
         jumping = Input.GetKeyDown(jump);
 
-        crouching = Input.GetKey(crouch) && Input.GetKey(KeyCode.W);
+        crouching = Input.GetKey(crouch);
+        crouchingI = Input.GetKeyUp(crouch);
 
         sprinting = Input.GetKey(sprint) && Input.GetKey(KeyCode.W);
         upSprinting = Input.GetKeyUp(sprint);
@@ -166,6 +192,10 @@ public class PlayerMovement : MonoBehaviour
             {
                 StopCrouching();
             }
+            if (crouchingI)
+            {
+                speed = defaultSpeed;
+            }
         }
 
     }
@@ -173,7 +203,6 @@ public class PlayerMovement : MonoBehaviour
     public void StopCrouching()
     {
         transform.localScale = new Vector3(transform.localScale.x, originalSize, transform.localScale.z);
-        speed = defaultSpeed;
     }
 
     //sprinting
@@ -219,5 +248,37 @@ public class PlayerMovement : MonoBehaviour
 
         rb.drag = drag;
         movement = transform.forward * y + transform.right * x;
+    }
+
+    private void summonSlope()
+    {
+        upper = new GameObject("UpperCheck");
+        downer = new GameObject("DownCheck");
+        upper.transform.parent = movementHelper.transform;
+        downer.transform.parent = movementHelper.transform;
+        upper.transform.position = upperCheck;
+        downer.transform.position = downCheck;
+    }
+
+    public void stairAndSlopeFix()
+    {
+        isUp = Physics.CheckSphere(upper.transform.position, stairCheckRadius, hittable);
+        isDown = Physics.CheckSphere(downer.transform.position, stairCheckRadius, hittable);
+        bool isMovingX = x > 0.5f || x < -0.5f;
+        bool isMovingY = y > 0.5f || y < -0.5f;
+
+        if (isDown)
+        {
+            if (!isUp && isMovingX)
+            {
+                rb.AddForce(transform.TransformDirection(Vector3.up) * forceUp);
+                rb.AddForce(transform.TransformDirection(Vector3.forward) * forceForward * y);
+            }
+            if (!isUp && isMovingY)
+            {
+                rb.AddForce(transform.TransformDirection(Vector3.up) * forceUp);
+                rb.AddForce(transform.TransformDirection(Vector3.right) * forceForward * x);
+            }
+        }
     }
 }
