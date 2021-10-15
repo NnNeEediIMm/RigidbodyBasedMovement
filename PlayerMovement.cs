@@ -10,6 +10,7 @@ public class PlayerMovement : MonoBehaviour
 {
     //move system
     Vector3 movement;
+    Vector3 check;
     float x, y;
     GameObject movementHelper;
     [Header("Main Movement")]
@@ -25,7 +26,6 @@ public class PlayerMovement : MonoBehaviour
 
     //gravity
     private bool isGrounded = false;
-    private GameObject grCheck;
     [Header("Gravity")]
     public LayerMask ground;
     public int gravityScale = 45;
@@ -65,14 +65,12 @@ public class PlayerMovement : MonoBehaviour
     public float forceForward= 40f;
     public float forceUp = 60f;
     public LayerMask hittable;
-    public Vector3 upperCheck, downCheck;
     public float stairRadiusDown = 1f;
     public float stairRadiusUp = 0.7f;
-    /*height needs to be height of collider height*/public float heightOfPlayer = 2f;
+    private float heightOfPlayer = 2f;
 
     Vector3 slerpDirection;
-    GameObject upper, downer;
-    bool isUp, isDown;
+    public bool isUp, isDown;
 
     private void Awake()
     {
@@ -82,14 +80,10 @@ public class PlayerMovement : MonoBehaviour
 
     private void Start()
     {
-        //for movement
-        movementHelper = new GameObject("Movement Helper");
-        movementHelper.transform.parent = this.transform;
-
         //for ground
-        groundCheck();
-        transform.localScale = new Vector3(transform.localScale.x, 1, transform.localScale.z);
         endOfYPosition = transform.lossyScale.y;
+
+        heightOfPlayer = endOfYPosition * 2;
         
         //rb fixes
         rb.constraints = RigidbodyConstraints.FreezeRotation;
@@ -103,17 +97,6 @@ public class PlayerMovement : MonoBehaviour
         //for spinting
         defaultSpeed = speed;
         sprintSpeed = defaultSpeed * 1.5f;
-
-        //for physics
-        summonSlope();
-    }
-
-    private void groundCheck()
-    {
-        //for gravity
-        grCheck = new GameObject("Check");
-        grCheck.transform.position = new Vector3(transform.position.x, transform.position.y - transform.lossyScale.y, transform.position.z);
-        grCheck.transform.parent = movementHelper.transform;
     }
 
     private void Update()
@@ -158,7 +141,9 @@ public class PlayerMovement : MonoBehaviour
     }
     public void normalizeGravity()
     {
-        isGrounded = Physics.CheckSphere(grCheck.transform.position, checkRadius, ground);
+        check = new Vector3(transform.position.x, transform.position.y - endOfYPosition, transform.position.z);
+
+        isGrounded = Physics.CheckSphere(check, checkRadius, ground);
     }
     //end of gravity
 
@@ -271,23 +256,12 @@ public class PlayerMovement : MonoBehaviour
         slerpDirection = Vector3.ProjectOnPlane(movement, slopeHit.normal);
     }
 
-    private void summonSlope()
-    {
-        upper = new GameObject("UpperCheck");
-        downer = new GameObject("DownCheck");
-        upper.transform.parent = movementHelper.transform;
-        downer.transform.parent = movementHelper.transform;
-        upper.transform.position = upperCheck;
-        downer.transform.position = downCheck;
-    }
-
     public void stairAndSlopeFix()
     {
-        isUp = Physics.CheckSphere(upper.transform.position, stairRadiusUp, hittable);
-        isDown = Physics.CheckSphere(downer.transform.position, stairRadiusDown, hittable);
+        isUp = Physics.CheckSphere(transform.position, stairRadiusUp, hittable);
+        isDown = Physics.CheckSphere(check, stairRadiusDown, hittable);
         bool isMovingX = x > 0.5f || x < -0.5f;
         bool isMovingY = y > 0.5f || y < -0.5f;
-
 
 
         if (isDown && isGrounded && usePhysics)
@@ -305,7 +279,7 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    public async void FindWherePlayerIsLoking(float x, float y)
+    public void FindWherePlayerIsLoking(float x, float y)
     {
         movement = transform.forward * x + transform.right * y;
     }
