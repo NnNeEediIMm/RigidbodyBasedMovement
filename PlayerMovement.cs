@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 /*Player movement for 
@@ -36,7 +37,6 @@ public class PlayerMovement : MonoBehaviour
 
     //Rigidbody
     protected Rigidbody rb;
-    protected Collider coll;
 
     //jumping
     bool jumping;
@@ -44,9 +44,12 @@ public class PlayerMovement : MonoBehaviour
     public float jumpForce = 1000f;
 
     //crouching
-    bool crouching, crouchingI;
+    bool crouching;
     [Header("Crouching")]
     public bool canCrouch = true;
+    public float standUpAfter = 1f;
+    public float standUpTime = 1f;
+    bool isSliding = false;
     private float speedWhileCrouching;
     private float originalSize;
     float reducedSize = 0.5f;
@@ -75,7 +78,6 @@ public class PlayerMovement : MonoBehaviour
     private void Awake()
     {
         rb = /*Rigidbody Component*/ GetComponent<Rigidbody>();
-        coll = /*Collider Component*/ GetComponent<Collider>();
     }
 
     private void Start()
@@ -84,10 +86,6 @@ public class PlayerMovement : MonoBehaviour
         endOfYPosition = transform.lossyScale.y;
 
         heightOfPlayer = endOfYPosition * 2;
-        
-        //rb fixes
-        rb.constraints = RigidbodyConstraints.FreezeRotation;
-        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
 
         //for crouching
         originalSize = transform.localScale.y;
@@ -97,6 +95,18 @@ public class PlayerMovement : MonoBehaviour
         //for spinting
         defaultSpeed = speed;
         sprintSpeed = defaultSpeed * 1.5f;
+    }
+
+    private void rbFix()
+    {
+        //rb fixes
+        rb.mass = 1f;
+        rb.angularDrag = 0.05f;
+        rb.useGravity = true;
+        rb.isKinematic = false;
+        rb.constraints = RigidbodyConstraints.FreezeRotation;
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
     }
 
     private void Update()
@@ -116,6 +126,9 @@ public class PlayerMovement : MonoBehaviour
         //slopes 
         stairAndSlopeFix();
         endOfYPosition = transform.lossyScale.y;
+
+        //rb
+        rbFix();
     }
 
     /// <summary>
@@ -159,7 +172,6 @@ public class PlayerMovement : MonoBehaviour
         jumping = Input.GetKeyDown(jump);
 
         crouching = Input.GetKey(crouch);
-        crouchingI = Input.GetKeyUp(crouch);
 
         sprinting = Input.GetKey(sprint) && Input.GetKey(KeyCode.W);
         upSprinting = Input.GetKeyUp(sprint);
@@ -184,18 +196,25 @@ public class PlayerMovement : MonoBehaviour
             if (crouching)
             {
                 transform.localScale = new Vector3(transform.localScale.x, reducedSize, transform.localScale.z);
-                speed = speedWhileCrouching;
+                rb.AddForce(transform.forward * speedWhileCrouching * Time.deltaTime);
+                isSliding = true;
             }
             if (!crouching)
             {
                 StopCrouching();
-            }
-            if (crouchingI)
+                isSliding = false;
+            }   
+            if (Input.GetKeyUp(crouch))
             {
                 speed = defaultSpeed;
+                StopCrouching();
+                StopAllCoroutines();
+            }
+            if (Input.GetKeyDown(crouch))
+            {
+                StartCoroutine(slideStop());
             }
         }
-
     }
 
     public void StopCrouching()
@@ -299,5 +318,25 @@ public class PlayerMovement : MonoBehaviour
             }
         }
         return false;
+    }
+
+    IEnumerator slideStop()
+    {
+        yield return new WaitForSecondsRealtime(standUpAfter);
+        standUp();
+    }
+
+    private void standUp()
+    {
+        float t = 0f;
+        if (t >= 1)
+        {
+            return;
+        }
+
+        t += Time.deltaTime / standUpTime;
+
+        isSliding = false;
+        speed = Mathf.SmoothStep(speed, 0, t);
     }
 }
