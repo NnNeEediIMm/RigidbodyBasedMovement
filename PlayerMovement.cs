@@ -368,9 +368,6 @@ public class PlayerMovement : MonoBehaviour
     public class variables : Editor
     {
     bool usePhysicsButtons = false;
-
-    public float stairRadiusDown = 1f;
-    public float stairRadiusUp = 0.7f;
     public override void OnInspectorGUI()
         {
         PlayerMovement movement = (PlayerMovement)target;
