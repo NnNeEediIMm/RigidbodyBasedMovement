@@ -1,18 +1,12 @@
 using System.Collections;
 using UnityEngine;
 
-//only for custom
-#if UNITY_EDITOR
-using UnityEditor;
-using System.Collections.Generic;
-#endif
-
 /*Player movement for 
  Rigidbody made by 
   NnNeEediIMm!*/
 
 [RequireComponent(typeof(Rigidbody))]
-public class PlayerMovement : MonoBehaviour
+public class Movement : MonoBehaviour
 {
     //Movement
     Vector3 movement;
@@ -69,7 +63,10 @@ public class PlayerMovement : MonoBehaviour
 
     //Physics
     [Header("Physics")]
-    public bool useSlope = true, useStairs = true, noWallSticking = true;
+    public bool useSlope = true; 
+    public bool useStairs = true, noWallSticking = true;
+
+    [Space(15)]
     public float forceForward = 40f;
     public float forceUp = 60f;
     public LayerMask hittable;
@@ -78,7 +75,7 @@ public class PlayerMovement : MonoBehaviour
 
     Vector3 slerpDirection;
     bool isUp, isDown;
-    
+
     private void Awake()
     {
         rb = /*Rigidbody Component*/ GetComponent<Rigidbody>();
@@ -362,103 +359,3 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 }
-    #region Editor
-#if UNITY_EDITOR
-    [CustomEditor(typeof(PlayerMovement))]
-    public class variables : Editor
-    {
-    bool usePhysicsButtons = false;
-    public override void OnInspectorGUI()
-        {
-        PlayerMovement movement = (PlayerMovement)target;
-
-        //movement
-        GUILayout.Space(1);
-        EditorGUILayout.LabelField("Movement", EditorStyles.boldLabel);
-        GUILayout.Label($"  Speed: {movement.speed}");
-        movement.speed = GUILayout.HorizontalSlider(movement.speed, 0, movement.maxSpeed);
-        GUILayout.Space(15);
-        movement.maxSpeed = EditorGUILayout.FloatField("Max Speed", movement.maxSpeed);
-        movement.slipperyMovement = GUILayout.Toggle(movement.slipperyMovement, "Slippery Movement");
-        GUILayout.Space(8);
-        movement.orientation = EditorGUILayout.ObjectField("Orientation ", movement.orientation, typeof(Transform), true) as Transform;
-
-        //Input
-        GUILayout.Space(10);
-        EditorGUILayout.LabelField("Input", EditorStyles.boldLabel);
-        movement.jump = (KeyCode)EditorGUILayout.EnumPopup("Jump", movement.jump);
-        movement.crouch = (KeyCode)EditorGUILayout.EnumPopup("Crouch", movement.crouch);
-        movement.sprint = (KeyCode)EditorGUILayout.EnumPopup("Sprint", movement.sprint);
-
-        //gravity
-        GUILayout.Space(7.5f);
-        EditorGUILayout.LabelField("Gravity", EditorStyles.boldLabel);
-        movement.ground = EditorGUILayout.LayerField("Ground", movement.ground);
-        movement.gravityScale = EditorGUILayout.IntField("Gravity Scale", movement.gravityScale);
-        movement.groundCheck = EditorGUILayout.ObjectField("Ground Check ", movement.groundCheck, typeof(Transform), true) as Transform;
-        GUILayout.Space(4.75f);
-        EditorGUILayout.LabelField($"  Ground Check raduis: {movement.checkRadius}");
-        movement.checkRadius = GUILayout.HorizontalSlider(movement.checkRadius, 0, 2);
-        GUILayout.Space(10);
-
-        //jumping
-        GUILayout.Space(10);
-        EditorGUILayout.LabelField("Jumping", EditorStyles.boldLabel);
-        movement.jumpForce = EditorGUILayout.FloatField(movement.jumpForce);
-
-        //crouch
-        GUILayout.Space(10);
-        EditorGUILayout.LabelField("Crouching", EditorStyles.boldLabel);
-        movement.canCrouch = GUILayout.Toggle(movement.canCrouch, "Can Crouch");
-        GUILayout.Space(6);
-        GUILayout.BeginHorizontal();
-        EditorGUILayout.LabelField("Stand Up After");
-        movement.standUpAfter = EditorGUILayout.FloatField(movement.standUpAfter);
-        GUILayout.EndHorizontal();
-        GUILayout.BeginHorizontal();
-        EditorGUILayout.LabelField("Stand Up Time");
-        movement.standUpTime = EditorGUILayout.FloatField(movement.standUpTime);
-        GUILayout.EndHorizontal();
-
-        //sprint
-        GUILayout.Space(10);
-        EditorGUILayout.LabelField("Sprint", EditorStyles.boldLabel);
-        movement.canSprint = GUILayout.Toggle(movement.canSprint, "Can Sprint");
-
-        //physics
-        GUILayout.Space(10);
-        EditorGUILayout.LabelField("Physics", EditorStyles.boldLabel);
-        usePhysicsButtons = EditorGUILayout.Foldout(usePhysicsButtons, "Physics Preferences", false);
-        GUILayout.Space(4);
-        if (usePhysicsButtons)
-        {
-            movement.useSlope = GUILayout.Toggle(movement.useSlope, "Slope");
-            movement.useStairs = GUILayout.Toggle(movement.useStairs, "Use Stairs");
-            movement.noWallSticking = GUILayout.Toggle(movement.noWallSticking, "No Wall Sticking");
-        }
-
-        GUILayout.Space(3.35f);
-        GUILayout.BeginVertical();
-        GUILayout.Label("Force Forward: ");
-        movement.forceForward = EditorGUILayout.FloatField(movement.forceForward);
-        GUILayout.EndVertical();
-
-        GUILayout.BeginVertical();
-        GUILayout.Label("Force Forward: ");
-        movement.forceUp = EditorGUILayout.FloatField(movement.forceUp);
-        GUILayout.EndVertical();
-
-        GUILayout.Label("  Stair ");
-        GUILayout.Space(4);
-        GUILayout.BeginVertical();
-        movement.hittable = EditorGUILayout.LayerField("Wall", movement.hittable);
-        movement.stairRadiusUp = EditorGUILayout.FloatField("Radius for upper check ", movement.stairRadiusUp);
-        movement.stairRadiusDown = EditorGUILayout.FloatField("Radius for down check ", movement.stairRadiusDown);
-        GUILayout.EndVertical();
-
-        //for the end 
-        GUILayout.Space(4.5f);
-    }
-}
-#endif
-    #endregion
