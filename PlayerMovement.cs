@@ -6,7 +6,7 @@ using UnityEngine;
   NnNeEediIMm!*/
 
 [RequireComponent(typeof(Rigidbody))]
-public class Movement : MonoBehaviour
+public class PlayerMovement : MonoBehaviour
 {
     //Movement
     Vector3 movement;
