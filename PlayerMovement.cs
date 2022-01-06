@@ -14,7 +14,6 @@ public class PlayerMovement : MonoBehaviour
     [Header("Main Movement")]
     [Range(1, 100)]
     public float speed = 10f;
-    public float maxSpeed = 20;
     public bool slipperyMovement = false;
     public Transform orientation;
 
